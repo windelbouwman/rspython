@@ -5,3 +5,6 @@ name = "rupy"
 version = "0.0.1"
 authors = [ "Windel Bouwman" ]
 
+[dependencies]
+
+clap="2.20.0"
