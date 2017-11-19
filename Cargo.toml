@@ -4,7 +4,15 @@
 name = "rupy"
 version = "0.0.1"
 authors = [ "Windel Bouwman" ]
+build = "build.rs"
+
+
+[build-dependencies]
+lalrpop="0.13.1"
 
 [dependencies]
 
 clap="2.20.0"
+lalrpop-util="0.13.1"
+regex="0.2.2"
+

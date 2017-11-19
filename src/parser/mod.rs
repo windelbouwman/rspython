@@ -1,5 +1,14 @@
+// This file makes this directory a submodule.
 
-pub fn parse(filename: &str) -> i32 {
-  println!("Parsing {}", filename);
-  return 1337;
-}
+mod parser;
+mod python;
+mod ast;
+mod compile;
+mod bytecode;
+mod builtins;
+mod pyobject;
+mod vm;
+
+pub use self::parser::parse;
+pub use self::compile::compile;
+pub use self::vm::evaluate;
