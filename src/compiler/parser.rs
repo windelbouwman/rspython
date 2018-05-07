@@ -3,8 +3,8 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
-use parser::python;
-use parser::ast;
+use compiler::python;
+use compiler::ast;
 
 fn read_file(filename: &Path) -> Result<String, String> {
   match File::open(&filename) {
@@ -31,12 +31,27 @@ pub fn parse(filename: &Path) -> Result<ast::Program, String> {
   match read_file(filename) {
     Ok(txt) => {
       println!("Read contents of file: {}", txt);
-
-      match python::parse_Program(&txt) {
-        Err(why) => Err(String::from(format!("{:?}", why))),
-        Ok(p) => Ok(p),
-      }
+      parse_source(&txt)
     },
     Err(msg) => Err(msg),
   }
+}
+
+pub fn parse_source(source: &String) -> Result<ast::Program, String> {
+      match python::ProgramParser::new().parse(&source) {
+        Err(why) => Err(String::from(format!("{:?}", why))),
+        Ok(p) => Ok(p),
+      }
+}
+
+#[test]
+fn test_parse_print_hello() {
+    let source = String::from(r"print('Hello world')\n");
+    parse_source(&source).unwrap();
+}
+
+#[test]
+fn test_parse_print_2() {
+    let source = String::from(r"print('Hello world', 2)\n");
+    parse_source(&source).unwrap();
 }

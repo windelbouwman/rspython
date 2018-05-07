@@ -6,9 +6,9 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use parser::bytecode;
-use parser::builtins;
-use parser::pyobject::PyObject;
+use compiler::bytecode;
+use compiler::builtins;
+use compiler::pyobject::PyObject;
 
 // use objects::objects;
 

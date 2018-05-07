@@ -9,6 +9,6 @@ mod builtins;
 mod pyobject;
 mod vm;
 
-pub use self::parser::parse;
-pub use self::compile::compile;
-pub use self::vm::evaluate;
+pub use compiler::parser::parse;
+pub use compiler::compile::compile;
+pub use compiler::vm::evaluate;

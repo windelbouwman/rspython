@@ -8,7 +8,7 @@
  */
 
 use std::rc::Rc;
-use parser::pyobject::PyObject;
+use compiler::pyobject::PyObject;
 
 pub fn fill_scope() {
   // scope[String::from("print")] = print;

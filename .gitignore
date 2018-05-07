@@ -1,5 +1,4 @@
 
 target
-*.lock
 src/parser/python.rs
 

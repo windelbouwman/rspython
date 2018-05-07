@@ -2,11 +2,11 @@
 extern crate clap;
 use clap::{Arg, App};
 use std::path::Path;
-mod parser;
+mod compiler;
 
 
 fn main() {
-  let matches = App::new("Rupy")
+  let matches = App::new("RsPython")
                 .version("0.0.1")
                 .author("Windel Bouwman")
                 .about("Rust implementation of the Python language")
@@ -25,15 +25,14 @@ fn main() {
 
   // Parse an ast from it:
   let filepath = Path::new(script_file);
-  match parser::parse(filepath) {
+  match compiler::parse(filepath) {
     Ok(program) => {
       println!("Got ast: {:?}", program);
-      let bytecode = parser::compile(program);
+      let bytecode = compiler::compile(program);
       println!("Code object: {:?}", bytecode);
-      parser::evaluate(bytecode);
+      compiler::evaluate(bytecode);
     },
     Err(msg) => println!("Parsing went horribly wrong: {}", msg),
   }
 }
-
 
