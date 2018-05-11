@@ -31,11 +31,13 @@ pub enum Instruction {
     LoadName { name: String },
     LoadConst { value: i32 },
     LoadStringConstant { value: String },
+    BinaryAdd,
+    BinarySubtract,
     Pop,
     Pass,
     Continue,
     Break,
-    CallFunction,
+    CallFunction { count: usize },
     ReturnValue,
 }
 

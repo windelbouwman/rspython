@@ -3,8 +3,8 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
-use compiler::python;
-use compiler::ast;
+use super::python;
+use super::ast;
 
 fn read_file(filename: &Path) -> Result<String, String> {
   match File::open(&filename) {
@@ -27,10 +27,10 @@ fn read_file(filename: &Path) -> Result<String, String> {
  */
 
 pub fn parse(filename: &Path) -> Result<ast::Program, String> {
-  println!("Parsing: {}", filename.display());
+  info!("Parsing: {}", filename.display());
   match read_file(filename) {
     Ok(txt) => {
-      println!("Read contents of file: {}", txt);
+      debug!("Read contents of file: {}", txt);
       parse_source(&txt)
     },
     Err(msg) => Err(msg),
@@ -44,14 +44,19 @@ pub fn parse_source(source: &String) -> Result<ast::Program, String> {
       }
 }
 
-#[test]
-fn test_parse_print_hello() {
-    let source = String::from(r"print('Hello world')\n");
-    parse_source(&source).unwrap();
-}
+#[cfg(test)]
+mod tests {
+    use super::parse_source;
 
-#[test]
-fn test_parse_print_2() {
-    let source = String::from(r"print('Hello world', 2)\n");
-    parse_source(&source).unwrap();
+    #[test]
+    fn test_parse_print_hello() {
+        let source = String::from(r"print('Hello world')");
+        parse_source(&source).unwrap();
+    }
+
+    #[test]
+    fn test_parse_print_2() {
+        let source = String::from(r"print('Hello world', 2)");
+        parse_source(&source).unwrap();
+    }
 }

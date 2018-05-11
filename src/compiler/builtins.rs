@@ -8,7 +8,8 @@
  */
 
 use std::rc::Rc;
-use compiler::pyobject::PyObject;
+use super::pyobject::PyObject;
+use std::io::{self, Write};
 
 pub fn fill_scope() {
   // scope[String::from("print")] = print;
@@ -16,11 +17,13 @@ pub fn fill_scope() {
 
 pub fn print(args: Vec<Rc<PyObject>>) {
     // println!("Woot: {:?}", args);
+    trace!("print called with {:?}", args);
     for a in args {
-        print!("{}", a.str());
+        print!("{} ", a.str());
     }
+    println!();
+    io::stdout().flush().unwrap();
 }
-
 
 fn any() {
 }

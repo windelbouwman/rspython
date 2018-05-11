@@ -1,5 +1,7 @@
 
 // Loosely based on token.h from CPython source:
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Tok {
     Name,
     Number,
@@ -50,5 +52,5 @@ pub enum Tok {
     AtEqual,
     Rarrow,
     Ellipses,
-};
+}
 

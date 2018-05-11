@@ -25,9 +25,11 @@ pub enum Statement {
     Break,
     Continue,
     Pass,
+    Assert {test: Expression, msg: Expression },
     Expression { expression: Expression },
     If { test: Expression, body: Vec<Statement>},
     While { test: Expression, body: Vec<Statement> },
+    With { items: Expression, body: Vec<Statement> },
     For { test: Expression },
     ClassDef {
       name: String,
