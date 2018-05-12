@@ -5,6 +5,7 @@ use std::io::Read;
 
 use super::python;
 use super::ast;
+use super::lexer;
 
 fn read_file(filename: &Path) -> Result<String, String> {
   match File::open(&filename) {
@@ -38,10 +39,11 @@ pub fn parse(filename: &Path) -> Result<ast::Program, String> {
 }
 
 pub fn parse_source(source: &String) -> Result<ast::Program, String> {
-      match python::ProgramParser::new().parse(&source) {
+    let lxr = lexer::Lexer::new(&source);
+    match python::ProgramParser::new().parse(lxr) {
         Err(why) => Err(String::from(format!("{:?}", why))),
         Ok(p) => Ok(p),
-      }
+    }
 }
 
 #[cfg(test)]
@@ -50,13 +52,13 @@ mod tests {
 
     #[test]
     fn test_parse_print_hello() {
-        let source = String::from(r"print('Hello world')");
+        let source = String::from("print('Hello world')\n");
         parse_source(&source).unwrap();
     }
 
     #[test]
     fn test_parse_print_2() {
-        let source = String::from(r"print('Hello world', 2)");
+        let source = String::from("print('Hello world', 2)\n");
         parse_source(&source).unwrap();
     }
 }

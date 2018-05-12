@@ -61,30 +61,69 @@ impl VirtualMachine {
                 // Pop value from stack and ignore.
                 self.stack.pop();
             },
-            bytecode::Instruction::BinarySubtract => {
+            bytecode::Instruction::BinaryMultiply => {
                 // Pop value from stack and ignore.
-                let a = &*self.stack.pop().unwrap();
                 let b = &*self.stack.pop().unwrap();
-                // let result = Rc::new(a - b);
-                let result = Rc::new(PyObject::Integer { value: -20 });
+                let a = &*self.stack.pop().unwrap();
+                let result = Rc::new(a * b);
                 self.stack.push(result);
+            },
+            bytecode::Instruction::BinaryMatrixMultiply => {
+                // Pop value from stack and ignore.
+                let b = &*self.stack.pop().unwrap();
+                let a = &*self.stack.pop().unwrap();
+                // let result = Rc::new(a * b);
+                // self.stack.push(result);
             },
             bytecode::Instruction::BinaryAdd => {
                 // Pop value from stack and ignore.
+                let b = &*self.stack.pop().unwrap();
+                let a = &*self.stack.pop().unwrap();
+                let result = Rc::new(a + b);
+                self.stack.pop();
+            },
+            bytecode::Instruction::BinarySubtract => {
+                // Pop value from stack and ignore.
+                let b = &*self.stack.pop().unwrap();
+                let a = &*self.stack.pop().unwrap();
+                let result = Rc::new(a - b);
+                self.stack.push(result);
+            },
+            bytecode::Instruction::BinaryLshift => {
                 let a = &*self.stack.pop().unwrap();
                 let b = &*self.stack.pop().unwrap();
-                let result = Rc::new(PyObject::Integer { value: -20 });
-                self.stack.pop();
+
+            },
+            bytecode::Instruction::BinaryRshift => {
+                let a = &*self.stack.pop().unwrap();
+                let b = &*self.stack.pop().unwrap();
+
+            },
+            bytecode::Instruction::BinaryAnd => {
+                let a = &*self.stack.pop().unwrap();
+                let b = &*self.stack.pop().unwrap();
+
+            },
+            bytecode::Instruction::BinaryXor => {
+                let a = &*self.stack.pop().unwrap();
+                let b = &*self.stack.pop().unwrap();
+
+            },
+            bytecode::Instruction::BinaryOr => {
+                let a = &*self.stack.pop().unwrap();
+                let b = &*self.stack.pop().unwrap();
+
             },
             bytecode::Instruction::ReturnValue => {
                 self.stack.pop();
             },
             bytecode::Instruction::CallFunction { count } => {
                 let mut args: Vec<Rc<PyObject>> = Vec::new();
-                // TODO: take the right number of arguments!
+
                 for _x in 0..count {
                     args.push(self.stack.pop().unwrap());
                 }
+
                 args.reverse();
                 let f = self.stack.pop().unwrap();
                 f.call(args);
@@ -92,11 +131,15 @@ impl VirtualMachine {
                 // If a builtin function, then call directly, otherwise, execute it?
                 // execute(function.code);
             },
-            bytecode::Instruction::Break => {},
+            bytecode::Instruction::Break => {
+
+            },
             bytecode::Instruction::Pass => {
                 // Ah, this is nice, just relax!
             },
-            bytecode::Instruction::Continue => {},
+            bytecode::Instruction::Continue => {
+
+            },
         }
     }
 }

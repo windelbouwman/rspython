@@ -35,10 +35,9 @@ fn main() {
       let bytecode = compiler::compile(program);
       debug!("Code object: {:?}", bytecode);
       compiler::evaluate(bytecode);
+      info!("Great succes!!");
     },
-    Err(msg) => println!("Parsing went horribly wrong: {}", msg),
+    Err(msg) => error!("Parsing went horribly wrong: {}", msg),
   }
-
-  info!("Great succes!!");
 }
 

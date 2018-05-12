@@ -1,17 +1,23 @@
-use std::str::FromStr;
+// See also: file:///usr/share/doc/python/html/reference/grammar.html?highlight=grammar
 use super::ast;
-
+use super::lexer;
+use std::iter::FromIterator;
 
 grammar;
 
 pub Program: ast::Program = {
-  <s:Statement> => ast::Program { statements: vec![s] },
+  <lines:FileLine*> => ast::Program { statements: Vec::from_iter(lines.into_iter().filter_map(|e| e)) },
+};
+
+// A file line either has a declaration, or an empty newline:
+FileLine: Option<ast::Statement> = {
+    <s:Statement> => Some(s),
+    "\n" => None,
 };
 
 Suite: Vec<ast::Statement> = {
-  // Newline Indent <s:Statement+> Dedent => s,
   <s:SimpleStatement> => vec![s],
-  Newline <s:Statement> => vec![s],
+  "\n" indent <s:Statement+> dedent => s,
 };
 
 Statement: ast::Statement = {
@@ -20,7 +26,7 @@ Statement: ast::Statement = {
 };
 
 SimpleStatement: ast::Statement = {
-  <s:SmallStatement> => s,
+  <s:SmallStatement> "\n" => s,
 };
 
 SmallStatement: ast::Statement = {
@@ -31,10 +37,26 @@ SmallStatement: ast::Statement = {
 };
 
 CompoundStatement: ast::Statement = {
-  "if" <e:Expression> ":" <s:Suite> => ast::Statement::If { test: e, body: s },
-  "while" <e:Expression> ":" <s:Suite> => ast::Statement::While { test: e, body: s },
-  "for" <e:Expression> ":" <s:Suite> => ast::Statement::For { test: e },
+  "if" <e:Test> ":" <s:Suite> => ast::Statement::If { test: e, body: s },
+  "while" <e:Test> ":" <s:Suite> => ast::Statement::While { test: e, body: s },
+  "for" <e:ExpressionList> "in" <t:TestList> ":" <s:Suite> => ast::Statement::For { target: e, iter: t, body: s, or_else: None },
   "def" <i:Identifier> "(" ")" ":" <s:Suite> => ast::Statement::FunctionDef { name: i, body: s },
+};
+
+Test: ast::Expression = {
+  <e:OrTest> => e,
+};
+
+OrTest: ast::Expression = {
+  <e:AndTest> => e,
+};
+
+AndTest: ast::Expression = {
+  <e:NotTest> => e,
+};
+
+NotTest: ast::Expression = {
+  <e:Expression> => e,
 };
 
 Expression: ast::Expression = {
@@ -82,24 +104,72 @@ Atom: ast::Expression = {
   <s:String> => ast::Expression::String { value: s },
   <n:Number> => ast::Expression::Number { value: n },
   <i:Identifier> => ast::Expression::Identifier { name: i },
+  "[" <e:TestList> "]" => ast::Expression::List { elements: e },
   "(" <e:Expression> ")" => e,
   "True" => ast::Expression::True,
   "False" => ast::Expression::False,
   "None" => ast::Expression::None,
 };
 
+ExpressionList: Vec<ast::Expression> = {
+  <e: Comma<Expression>> => e,
+};
+
+TestList: Vec<ast::Expression> = {
+  <e: Comma<Test>> => e,
+};
+
 FunctionArguments: Vec<ast::Expression> = {
-  <e:Expression> => vec![e],
-  <e1:Expression> "," <e2:Expression> => vec![e1, e2],
+  <e: Comma<Expression>> => e,
 };
 
-//Comma<T>: Vec<T> = {
-//   <v:
-//};
+Comma<T>: Vec<T> = {
+    <items: (<T> ",")*> <last: T?> => {
+        let mut items = items;
+        items.extend(last);
+        items
+    }
+};
 
-Number: i32 = <s:r"[0-9]+"> => i32::from_str(s).unwrap();
+Number: i32 = <s:number> => s;
 String: String = {
-  <s:r"'[^']+'"> => String::from(s),
+  <s:string> => s,
 };
-Identifier: String = <s:r"[a-z]+"> => String::from(s);
-Newline: String = "\n" => String::from(<>);
+Identifier: String = <s:name> => s;
+
+// Hook external lexer:
+extern {
+    type Location = usize;
+    type Error = lexer::LexicalError;
+
+    enum lexer::Tok {
+        indent => lexer::Tok::Indent,
+        dedent => lexer::Tok::Dedent,
+        "+" => lexer::Tok::Plus,
+        "-" => lexer::Tok::Minus,
+        ":" => lexer::Tok::Colon,
+        "," => lexer::Tok::Comma,
+        "*" => lexer::Tok::Star,
+        "/" => lexer::Tok::Slash,
+        "(" => lexer::Tok::Lpar,
+        ")" => lexer::Tok::Rpar,
+        "[" => lexer::Tok::Lsqb,
+        "]" => lexer::Tok::Rsqb,
+        "break" => lexer::Tok::Break,
+        "continue" => lexer::Tok::Break,
+        "pass" => lexer::Tok::Pass,
+        "if" => lexer::Tok::If,
+        "while" => lexer::Tok::While,
+        "for" => lexer::Tok::For,
+        "in" => lexer::Tok::In,
+        "def" => lexer::Tok::Def,
+        "class" => lexer::Tok::Class,
+        "True" => lexer::Tok::True,
+        "False" => lexer::Tok::False,
+        "None" => lexer::Tok::None,
+        number => lexer::Tok::Number { value: <i32> },
+        string => lexer::Tok::String { value: <String> },
+        name => lexer::Tok::Name { name: <String> },
+        "\n" => lexer::Tok::Newline,
+    }
+}

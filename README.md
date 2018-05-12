@@ -27,11 +27,11 @@ Use cases for RsPython:
 
     $ git clone https://github.com/windelbouwman/rspython
     $ cd rspython
-    $ cat demos/demo.py
+    $ cat demos/simple.py
     print('a=', 2 - 22)
-    $ cargo run demos/demo.py
+    $ cargo run demos/simple.py
     a= -20
-    $ python demos/demo.py
+    $ python demos/simple.py
     a= -20
 
 To get a whole lot of logging, use:

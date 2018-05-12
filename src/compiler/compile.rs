@@ -45,7 +45,11 @@ impl Compiler {
             ast::Statement::With { items, body } => {
                 // TODO
             },
-            ast::Statement::For { test } => {},
+            ast::Statement::For { target, iter, body, or_else } => {
+                for inner_statement in body {
+                    self.compile_statement(inner_statement)
+                }
+            },
             ast::Statement::FunctionDef { name, body } => {
                 for inner_statement in body {
                     self.compile_statement(inner_statement)
@@ -86,20 +90,25 @@ impl Compiler {
                 self.compile_expression(*b);
 
                 // Perform operation:
-                match op {
-                    ast::Operator::Sub => {
-                        self.emit(bytecode::Instruction::BinarySubtract);
-                    },
-                    ast::Operator::Add => {
-                        self.emit(bytecode::Instruction::BinaryAdd);
-                    },
+                let i = match op {
+                    ast::Operator::Add => bytecode::Instruction::BinaryAdd,
+                    ast::Operator::Sub => bytecode::Instruction::BinarySubtract,
+                    ast::Operator::Mult => bytecode::Instruction::BinaryMultiply,
+                    ast::Operator::MatMult => bytecode::Instruction::BinaryMatrixMultiply,
+                    ast::Operator::BitOr => bytecode::Instruction::BinaryOr,
+                    ast::Operator::BitXor => bytecode::Instruction::BinaryXor,
+                    ast::Operator::BitAnd => bytecode::Instruction::BinaryAnd,
                     _ => {
                         panic!("NOTIMPL");
                     }
-                }
+                };
+                self.emit(i);
             },
             ast::Expression::Number { value } => {
                 self.emit(bytecode::Instruction::LoadConst { value });
+            },
+            ast::Expression::List { elements } => {
+
             },
             ast::Expression::True => {
                 self.emit(bytecode::Instruction::LoadConst { value: 1 });

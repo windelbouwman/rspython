@@ -30,7 +30,7 @@ pub enum Statement {
     If { test: Expression, body: Vec<Statement>},
     While { test: Expression, body: Vec<Statement> },
     With { items: Expression, body: Vec<Statement> },
-    For { test: Expression },
+    For { target: Vec<Expression>, iter: Vec<Expression>, body: Vec<Statement>, or_else: Option<Vec<Statement>> },
     ClassDef {
       name: String,
       // TODO: docstring: String,
@@ -47,6 +47,7 @@ pub enum Expression {
     Binop { a: Box<Expression>, op: Operator, b: Box<Expression> },
     Call { function: Box<Expression>, args: Vec<Expression> },
     Number { value: i32 },
+    List { elements: Vec<Expression> },
     String { value: String },
     Identifier { name: String },
     True,

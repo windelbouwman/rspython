@@ -3,9 +3,9 @@
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum Tok {
-    Name,
-    Number,
-    String,
+    Name { name: String },
+    Number { value: i32 },
+    String { value: String },
     Newline,
     Indent,
     Dedent,
@@ -28,7 +28,7 @@ pub enum Tok {
     Dot,
     Percent,
     Lbrace,
-    RBrace,
+    Rbrace,
     EqEqual,
     NotEqual,
     LessEqual,
@@ -52,5 +52,18 @@ pub enum Tok {
     AtEqual,
     Rarrow,
     Ellipses,
-}
 
+    // Keywords:
+    Pass,
+    Break,
+    Continue,
+    Def,
+    Class,
+    For,
+    In,
+    If,
+    While,
+    True,
+    False,
+    None,
+}
