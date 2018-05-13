@@ -43,11 +43,13 @@ pub enum Tok {
     StarEqual,
     SlashEqual,
     PercentEqual,
-    AmperEqual,
+    AmperEqual,  // '&='
     VbarEqual,
     CircumflexEqual,  // '^='
     LeftShiftEqual,
     RightShiftEqual,
+    DoubleSlash,  // '//'
+    DoubleSlashEqual,
     At,
     AtEqual,
     Rarrow,

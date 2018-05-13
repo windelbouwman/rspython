@@ -122,14 +122,17 @@ NotTest: ast::Expression = {
 };
 
 Expression: ast::Expression = {
+  <e1:Expression> "|" <e2:XorExpression> => ast::Expression::Binop { a: Box::new(e1), op: ast::Operator::BitOr, b: Box::new(e2) },
   <e:XorExpression> => e,
 };
 
 XorExpression: ast::Expression = {
+  <e1:XorExpression> "^" <e2:AndExpression> => ast::Expression::Binop { a: Box::new(e1), op: ast::Operator::BitXor, b: Box::new(e2) },
   <e:AndExpression> => e,
 };
 
 AndExpression: ast::Expression = {
+  <e1:AndExpression> "&" <e2:ArithmaticExpression> => ast::Expression::Binop { a: Box::new(e1), op: ast::Operator::BitAnd, b: Box::new(e2) },
   <e:ArithmaticExpression> => e,
 };
 
@@ -151,6 +154,9 @@ Term: ast::Expression = {
 MulOp: ast::Operator = {
   "*" => ast::Operator::Mult,
   "/" => ast::Operator::Div,
+  "//" => ast::Operator::FloorDiv,
+  "%" => ast::Operator::Mod,
+  "@" => ast::Operator::MatMult,
 };
 
 Factor: ast::Expression = {
@@ -216,12 +222,20 @@ extern {
         ":" => lexer::Tok::Colon,
         "," => lexer::Tok::Comma,
         "*" => lexer::Tok::Star,
+        "&" => lexer::Tok::Amper,
+        "@" => lexer::Tok::At,
+        "%" => lexer::Tok::Percent,
+        "//" => lexer::Tok::DoubleSlash,
+        "^" => lexer::Tok::CircumFlex,
+        "|" => lexer::Tok::Vbar,
         "/" => lexer::Tok::Slash,
         "(" => lexer::Tok::Lpar,
         ")" => lexer::Tok::Rpar,
         "[" => lexer::Tok::Lsqb,
         "]" => lexer::Tok::Rsqb,
         "=" => lexer::Tok::Equal,
+        "+=" => lexer::Tok::PlusEqual,
+        "-=" => lexer::Tok::MinusEqual,
         "assert" => lexer::Tok::Assert,
         "import" => lexer::Tok::Import,
         "break" => lexer::Tok::Break,

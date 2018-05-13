@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Mul, Sub};
 
 /* Python objects and references.
 
@@ -21,14 +21,27 @@ pub type PyObjectRef = PyRef<PyObject>;
 
 #[derive(Debug)]
 pub enum PyObject {
-    String { value: String },
-    Integer { value: i32 },
-    List { elements: Vec<PyObjectRef> },
-    Tuple { elements: Vec<PyObjectRef> },
+    String {
+        value: String,
+    },
+    Integer {
+        value: i32,
+    },
+    List {
+        elements: Vec<PyObjectRef>,
+    },
+    Tuple {
+        elements: Vec<PyObjectRef>,
+    },
     Dict,
-    Iterator { position: usize, iterated_obj: PyObjectRef },
+    Iterator {
+        position: usize,
+        iterated_obj: PyObjectRef,
+    },
     None,
-    RustFunction { function: fn(Vec<PyObjectRef>) },
+    RustFunction {
+        function: fn(Vec<PyObjectRef>),
+    },
 }
 
 /*
@@ -43,7 +56,7 @@ impl PyObject {
         match *self {
             PyObject::RustFunction { ref function } => {
                 function(args);
-            },
+            }
             _ => {
                 println!("Not impl {:?}", self);
                 panic!("Not impl");
@@ -53,15 +66,11 @@ impl PyObject {
 
     pub fn str(&self) -> String {
         match *self {
-            PyObject::String { ref value } => { value.clone() },
-            PyObject::Integer { ref value } => { format!("{:?}", value) },
-            PyObject::List { ref elements } => {
-                format!("{:?}", elements)
-            },
-            PyObject::Tuple { ref elements } => {
-                format!("{:?}", elements)
-            },
-            PyObject::None => { String::from("None") },
+            PyObject::String { ref value } => value.clone(),
+            PyObject::Integer { ref value } => format!("{:?}", value),
+            PyObject::List { ref elements } => format!("{:?}", elements),
+            PyObject::Tuple { ref elements } => format!("{:?}", elements),
+            PyObject::None => String::from("None"),
             _ => {
                 println!("Not impl {:?}", self);
                 panic!("Not impl");
@@ -72,10 +81,13 @@ impl PyObject {
     // Implement iterator protocol:
     pub fn nxt(&mut self) -> Option<PyObjectRef> {
         match *self {
-            PyObject::Iterator { ref mut position, iterated_obj: ref iterated_obj_ref } => {
+            PyObject::Iterator {
+                ref mut position,
+                iterated_obj: ref iterated_obj_ref,
+            } => {
                 let iterated_obj = &*iterated_obj_ref.borrow_mut();
                 match iterated_obj {
-                    &PyObject::List {ref elements} => {
+                    &PyObject::List { ref elements } => {
                         if *position < elements.len() {
                             let obj_ref = elements[*position].clone();
                             *position += 1;
@@ -83,12 +95,12 @@ impl PyObject {
                         } else {
                             None
                         }
-                    },
+                    }
                     _ => {
                         panic!("NOT IMPL");
                     }
                 }
-            },
+            }
             _ => {
                 panic!("NOT IMPL");
             }
@@ -111,13 +123,15 @@ impl<'a> Add<&'a PyObject> for &'a PyObject {
                 match rhs {
                     &PyObject::Integer { ref value } => {
                         let value2 = value;
-                        PyObject::Integer { value: value1 + value2 }
-                    },
+                        PyObject::Integer {
+                            value: value1 + value2,
+                        }
+                    }
                     _ => {
                         panic!("NOT IMPL");
                     }
                 }
-            },
+            }
             _ => {
                 // TODO: Lookup __add__ method in dictionary?
                 panic!("NOT IMPL");
@@ -136,13 +150,15 @@ impl<'a> Sub<&'a PyObject> for &'a PyObject {
                 match rhs {
                     &PyObject::Integer { value } => {
                         let value2 = value;
-                        PyObject::Integer { value: value1 - value2 }
-                    },
+                        PyObject::Integer {
+                            value: value1 - value2,
+                        }
+                    }
                     _ => {
                         panic!("NOT IMPL");
                     }
                 }
-            },
+            }
             _ => {
                 panic!("NOT IMPL");
             }
@@ -160,13 +176,15 @@ impl<'a> Mul<&'a PyObject> for &'a PyObject {
                 match rhs {
                     &PyObject::Integer { value } => {
                         let value2 = value;
-                        PyObject::Integer { value: value1 * value2 }
-                    },
+                        PyObject::Integer {
+                            value: value1 * value2,
+                        }
+                    }
                     _ => {
                         panic!("NOT IMPL");
                     }
                 }
-            },
+            }
             &PyObject::String { ref value } => {
                 let value1 = value;
                 match rhs {
@@ -177,12 +195,12 @@ impl<'a> Mul<&'a PyObject> for &'a PyObject {
                             result.push_str(value1.as_str());
                         }
                         PyObject::String { value: result }
-                    },
+                    }
                     _ => {
                         panic!("NOT IMPL");
                     }
                 }
-            },
+            }
             _ => {
                 panic!("NOT IMPL");
             }
@@ -200,23 +218,23 @@ mod tests {
         let b = PyObject::Integer { value: 12 };
         let c = &a + &b;
         match c {
-            PyObject::Integer { value } => {
-                assert_eq!(value, 45)
-            },
-            _ => { assert!(false) }
+            PyObject::Integer { value } => assert_eq!(value, 45),
+            _ => assert!(false),
         }
     }
 
     #[test]
     fn test_multiply_str() {
-        let a = PyObject::String { value: String::from("Hello ") };
+        let a = PyObject::String {
+            value: String::from("Hello "),
+        };
         let b = PyObject::Integer { value: 4 };
         let c = &a * &b;
         match c {
             PyObject::String { value } => {
                 assert_eq!(value, String::from("Hello Hello Hello Hello "))
-            },
-            _ => { assert!(false) }
+            }
+            _ => assert!(false),
         }
     }
 

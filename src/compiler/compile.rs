@@ -1,25 +1,35 @@
-
 /*
  * Take an AST and transform it into bytecode
  */
 
 use super::ast;
-use super::bytecode::{Instruction, CodeObject};
+use std::collections::HashMap;
+use super::bytecode::{self, CodeObject, Instruction};
 
 struct Compiler {
-  codeobject: CodeObject,
+    codeobject: CodeObject,
+    label_map: HashMap<Label, usize>,
+    nxt_label: usize,
 }
 
 pub fn compile(p: ast::Program) -> CodeObject {
-    let mut compiler = Compiler {
-        codeobject: CodeObject::new(),
-    };
+    let mut compiler = Compiler::new();
 
     compiler.compile_program(p);
     compiler.codeobject
 }
 
+type Label = usize;
+
 impl Compiler {
+    fn new() -> Self {
+        Compiler {
+            codeobject: CodeObject::new(),
+            label_map: HashMap::new(),
+            nxt_label: 0,
+        }
+    }
+
     fn compile_program(&mut self, program: ast::Program) {
         self.compile_statements(program.statements);
     }
@@ -30,30 +40,47 @@ impl Compiler {
         }
     }
 
+    // Generate a new label
+    fn new_label(&mut self) -> Label {
+        let l = self.nxt_label;
+        self.nxt_label += 1;
+        l
+    }
+
+    // Assign current position the given label
+    fn set_label(&mut self, label: Label) {
+        let position = self.codeobject.instructions.len();
+        // assert!(label not in self.label_map)
+        self.label_map.insert(label, position);
+    }
+
     fn compile_statement(&mut self, statement: ast::Statement) {
         trace!("Compiling {:?}", statement);
         match statement {
-            ast::Statement::Import { name } => {
-
-            },
+            ast::Statement::Import { name } => {}
             ast::Statement::Expression { expression } => {
                 self.compile_expression(expression);
 
                 // Pop result of stack, since we not use it:
                 self.emit(Instruction::Pop);
-            },
+            }
             ast::Statement::If { test, body } => {
                 self.compile_expression(test);
                 self.compile_statements(body);
-            },
+            }
             ast::Statement::While { test, body } => {
                 self.compile_expression(test);
                 self.compile_statements(body);
-            },
+            }
             ast::Statement::With { items, body } => {
                 // TODO
-            },
-            ast::Statement::For { target, iter, body, or_else } => {
+            }
+            ast::Statement::For {
+                target,
+                iter,
+                body,
+                or_else,
+            } => {
                 // The thing iterated:
                 for i in iter {
                     self.compile_expression(i);
@@ -63,6 +90,13 @@ impl Compiler {
                 self.emit(Instruction::GetIter);
 
                 // Start loop
+                let start_label = self.new_label();
+                let end_label = self.new_label();
+                self.emit(Instruction::PushBlock {
+                    start: start_label,
+                    end: end_label,
+                });
+                self.set_label(start_label);
                 self.emit(Instruction::ForIter);
 
                 // Start of loop iteration, set targets:
@@ -70,19 +104,22 @@ impl Compiler {
                     match t {
                         ast::Expression::Identifier { name } => {
                             self.emit(Instruction::StoreName { name: name });
-                        },
+                        }
                         _ => panic!("Not impl"),
                     }
                 }
 
+                // Body of loop:
                 self.compile_statements(body);
-            },
+                self.set_label(end_label);
+                self.emit(Instruction::PopBlock);
+            }
             ast::Statement::FunctionDef { name, body } => {
                 self.compile_statements(body);
-            },
+            }
             ast::Statement::ClassDef { name } => {
                 // TODO?
-            },
+            }
             ast::Statement::Assert { test, msg } => {
                 // TODO: if some flag, ignore all assert statements!
 
@@ -90,24 +127,26 @@ impl Compiler {
 
                 // if true, jump over raise:
 
-                self.emit(Instruction::LoadName { name: String::from("AssertionError") });
+                self.emit(Instruction::LoadName {
+                    name: String::from("AssertionError"),
+                });
                 match msg {
                     Some(e) => {
                         self.compile_expression(e);
-                        self.emit(Instruction::CallFunction {count: 1});
-                    },
+                        self.emit(Instruction::CallFunction { count: 1 });
+                    }
                     None => {
-                        self.emit(Instruction::CallFunction {count: 0});
-                    },
+                        self.emit(Instruction::CallFunction { count: 0 });
+                    }
                 }
                 // TODO?
-            },
+            }
             ast::Statement::Break => {
                 self.emit(Instruction::Break);
-            },
+            }
             ast::Statement::Continue => {
                 self.emit(Instruction::Continue);
-            },
+            }
             ast::Statement::Return { value } => {
                 match value {
                     Some(e) => {
@@ -120,14 +159,14 @@ impl Compiler {
                         if size > 1 {
                             self.emit(Instruction::BuildTuple { size });
                         }
-                    },
+                    }
                     None => {
                         // TODO: Put none on stack
                     }
                 }
 
                 self.emit(Instruction::ReturnValue);
-            },
+            }
             ast::Statement::Assign { targets, value } => {
                 self.compile_expression(value);
 
@@ -135,20 +174,20 @@ impl Compiler {
                     match target {
                         ast::Expression::Identifier { name } => {
                             self.emit(Instruction::StoreName { name: name });
-                        },
+                        }
                         _ => {
                             panic!("WTF");
                         }
                     }
                 }
-            },
+            }
             ast::Statement::Delete { targets } => {
                 // Remove the given names from the scope
                 // self.emit(Instruction::DeleteName);
-            },
+            }
             ast::Statement::Pass => {
                 self.emit(Instruction::Pass);
-            },
+            }
         }
     }
 
@@ -162,62 +201,62 @@ impl Compiler {
                     self.compile_expression(arg)
                 }
                 self.emit(Instruction::CallFunction { count: count });
-            },
+            }
             ast::Expression::Binop { a, op, b } => {
                 self.compile_expression(*a);
                 self.compile_expression(*b);
 
                 // Perform operation:
                 let i = match op {
-                    ast::Operator::Add => Instruction::BinaryAdd,
-                    ast::Operator::Sub => Instruction::BinarySubtract,
-                    ast::Operator::Mult => Instruction::BinaryMultiply,
-                    ast::Operator::MatMult => Instruction::BinaryMatrixMultiply,
-                    ast::Operator::Div => Instruction::BinaryDivide,
-                    ast::Operator::FloorDiv => Instruction::BinaryFloorDivide,
-                    ast::Operator::Mod => Instruction::BinaryModulo,
-                    ast::Operator::Pow => Instruction::BinaryPower,
-                    ast::Operator::LShift => Instruction::BinaryLshift,
-                    ast::Operator::RShift => Instruction::BinaryRshift,
-                    ast::Operator::BitOr => Instruction::BinaryOr,
-                    ast::Operator::BitXor => Instruction::BinaryXor,
-                    ast::Operator::BitAnd => Instruction::BinaryAnd,
+                    ast::Operator::Add => bytecode::BinaryOperator::Add,
+                    ast::Operator::Sub => bytecode::BinaryOperator::Subtract,
+                    ast::Operator::Mult => bytecode::BinaryOperator::Multiply,
+                    ast::Operator::MatMult => bytecode::BinaryOperator::MatrixMultiply,
+                    ast::Operator::Div => bytecode::BinaryOperator::Divide,
+                    ast::Operator::FloorDiv => bytecode::BinaryOperator::FloorDivide,
+                    ast::Operator::Mod => bytecode::BinaryOperator::Modulo,
+                    ast::Operator::Pow => bytecode::BinaryOperator::Power,
+                    ast::Operator::LShift => bytecode::BinaryOperator::Lshift,
+                    ast::Operator::RShift => bytecode::BinaryOperator::Rshift,
+                    ast::Operator::BitOr => bytecode::BinaryOperator::Or,
+                    ast::Operator::BitXor => bytecode::BinaryOperator::Xor,
+                    ast::Operator::BitAnd => bytecode::BinaryOperator::And,
                 };
+                let i = Instruction::BinaryOperation { op: i };
                 self.emit(i);
-            },
+            }
             ast::Expression::Number { value } => {
                 self.emit(Instruction::LoadConst { value });
-            },
+            }
             ast::Expression::List { elements } => {
                 let size = elements.len();
                 for element in elements {
                     self.compile_expression(element);
                 }
                 self.emit(Instruction::BuildList { size: size });
-            },
+            }
             ast::Expression::Tuple { elements } => {
                 // Load const?
-            },
+            }
             ast::Expression::True => {
                 self.emit(Instruction::LoadConst { value: 1 });
-            },
+            }
             ast::Expression::False => {
                 self.emit(Instruction::LoadConst { value: 0 });
-            },
+            }
             ast::Expression::None => {
                 self.emit(Instruction::LoadConst { value: 0 });
-            },
+            }
             ast::Expression::String { value } => {
                 self.emit(Instruction::LoadStringConstant { value });
-            },
+            }
             ast::Expression::Identifier { name } => {
                 self.emit(Instruction::LoadName { name });
-            },
+            }
         }
     }
 
-    fn emit(&mut self, instruction: Instruction)
-    {
+    fn emit(&mut self, instruction: Instruction) {
         self.codeobject.instructions.push(instruction);
     }
 }

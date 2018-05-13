@@ -1,4 +1,3 @@
-
 /*
  * Some functions are built into the interpreter, for example the print
  * function is such a builtin function.
@@ -11,7 +10,7 @@ use super::pyobject::PyObjectRef;
 use std::io::{self, Write};
 
 pub fn fill_scope() {
-  // scope[String::from("print")] = print;
+    // scope[String::from("print")] = print;
 }
 
 pub fn print(args: Vec<PyObjectRef>) {
@@ -24,9 +23,6 @@ pub fn print(args: Vec<PyObjectRef>) {
     io::stdout().flush().unwrap();
 }
 
-fn any() {
-}
+fn any() {}
 
-fn all() {
-}
-
+fn all() {}
