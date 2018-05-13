@@ -1,15 +1,45 @@
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::ops::{Add, Sub, Mul};
+
+/* Python objects and references.
+
+Okay, so each python object itself is an class itself (PyObject). Each
+python object can have several references to it (PyObjectRef). These
+references are Rc (reference counting) rust smart pointers. So when
+all references are destroyed, the object itself also can be cleaned up.
+Basically reference counting, but then done by rust.
+
+*/
+
+/*
+The PyRef type implements
+https://doc.rust-lang.org/std/cell/index.html#introducing-mutability-inside-of-something-immutable
+*/
+pub type PyRef<T> = Rc<RefCell<T>>;
+pub type PyObjectRef = PyRef<PyObject>;
 
 #[derive(Debug)]
 pub enum PyObject {
     String { value: String },
     Integer { value: i32 },
-    RustFunction { function: fn(Vec<Rc<PyObject>>) },
+    List { elements: Vec<PyObjectRef> },
+    Tuple { elements: Vec<PyObjectRef> },
+    Dict,
+    Iterator { position: usize, iterated_obj: PyObjectRef },
+    None,
+    RustFunction { function: fn(Vec<PyObjectRef>) },
 }
 
+/*
+impl PyObjectRef {
+    pub fn steal(&self) -> &mut PyObject {
+        self.borrow_mut()
+    }
+}*/
+
 impl PyObject {
-    pub fn call(&self, args: Vec<Rc<PyObject>>) {
+    pub fn call(&self, args: Vec<PyObjectRef>) {
         match *self {
             PyObject::RustFunction { ref function } => {
                 function(args);
@@ -25,11 +55,49 @@ impl PyObject {
         match *self {
             PyObject::String { ref value } => { value.clone() },
             PyObject::Integer { ref value } => { format!("{:?}", value) },
+            PyObject::List { ref elements } => {
+                format!("{:?}", elements)
+            },
+            PyObject::Tuple { ref elements } => {
+                format!("{:?}", elements)
+            },
+            PyObject::None => { String::from("None") },
             _ => {
                 println!("Not impl {:?}", self);
                 panic!("Not impl");
             }
         }
+    }
+
+    // Implement iterator protocol:
+    pub fn nxt(&mut self) -> Option<PyObjectRef> {
+        match *self {
+            PyObject::Iterator { ref mut position, iterated_obj: ref iterated_obj_ref } => {
+                let iterated_obj = &*iterated_obj_ref.borrow_mut();
+                match iterated_obj {
+                    &PyObject::List {ref elements} => {
+                        if *position < elements.len() {
+                            let obj_ref = elements[*position].clone();
+                            *position += 1;
+                            Some(obj_ref)
+                        } else {
+                            None
+                        }
+                    },
+                    _ => {
+                        panic!("NOT IMPL");
+                    }
+                }
+            },
+            _ => {
+                panic!("NOT IMPL");
+            }
+        }
+    }
+
+    // Move this object into a reference object, transferring ownership.
+    pub fn into_ref(self) -> PyObjectRef {
+        Rc::new(RefCell::new(self))
     }
 }
 

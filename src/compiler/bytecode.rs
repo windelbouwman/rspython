@@ -29,10 +29,15 @@ impl CodeObject {
 #[derive(Debug)]
 pub enum Instruction {
     LoadName { name: String },
+    StoreName { name: String },
     LoadConst { value: i32 },
     LoadStringConstant { value: String },
+    BinaryPower,
     BinaryMultiply,
     BinaryMatrixMultiply,
+    BinaryDivide,
+    BinaryFloorDivide,
+    BinaryModulo,
     BinaryAdd,
     BinarySubtract,
     BinaryLshift,
@@ -41,11 +46,16 @@ pub enum Instruction {
     BinaryXor,
     BinaryOr,
     Pop,
+    GetIter,
     Pass,
     Continue,
     Break,
     CallFunction { count: usize },
+    ForIter,
     ReturnValue,
+    BuildTuple { size: usize },
+    BuildList { size: usize },
+    BuildMap { size: usize },
 }
 
 

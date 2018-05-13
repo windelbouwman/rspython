@@ -53,9 +53,42 @@ impl<'input> Lexer<'input> {
         let end_pos = self.location;
 
         let mut keywords: HashMap<String, Tok> = HashMap::new();
+
+        // Alphabetical keywords:
+        keywords.insert(String::from("False"), Tok::False);
+        keywords.insert(String::from("None"), Tok::None);
+        keywords.insert(String::from("True"), Tok::True);
+
+        keywords.insert(String::from("and"), Tok::And);
+        keywords.insert(String::from("as"), Tok::As);
+        keywords.insert(String::from("assert"), Tok::Assert);
+        keywords.insert(String::from("break"), Tok::Break);
+        keywords.insert(String::from("class"), Tok::Class);
+        keywords.insert(String::from("continue"), Tok::Continue);
+        keywords.insert(String::from("def"), Tok::Def);
+        keywords.insert(String::from("del"), Tok::Del);
+        keywords.insert(String::from("elif"), Tok::Elif);
+        keywords.insert(String::from("else"), Tok::Else);
+        keywords.insert(String::from("except"), Tok::Except);
+        keywords.insert(String::from("finally"), Tok::Finally);
         keywords.insert(String::from("for"), Tok::For);
-        keywords.insert(String::from("in"), Tok::In);
+        keywords.insert(String::from("from"), Tok::From);
+        keywords.insert(String::from("global"), Tok::Global);
         keywords.insert(String::from("if"), Tok::If);
+        keywords.insert(String::from("import"), Tok::Import);
+        keywords.insert(String::from("in"), Tok::In);
+        keywords.insert(String::from("is"), Tok::Is);
+        keywords.insert(String::from("lambda"), Tok::Lambda);
+        keywords.insert(String::from("nonlocal"), Tok::Nonlocal);
+        keywords.insert(String::from("not"), Tok::Not);
+        keywords.insert(String::from("or"), Tok::Or);
+        keywords.insert(String::from("pass"), Tok::Pass);
+        keywords.insert(String::from("raise"), Tok::Raise);
+        keywords.insert(String::from("return"), Tok::Return);
+        keywords.insert(String::from("try"), Tok::Try);
+        keywords.insert(String::from("while"), Tok::While);
+        keywords.insert(String::from("with"), Tok::With);
+        keywords.insert(String::from("yield"), Tok::Yield);
 
         if keywords.contains_key(&name) {
             Ok((start_pos, keywords.remove(&name).unwrap(), end_pos))
@@ -129,13 +162,6 @@ impl<'input> Lexer<'input> {
     fn is_number(&self) -> bool {
         match self.chr0 {
             Some('0'...'9') => return true,
-            _ => return false,
-        }
-    }
-
-    fn is_end(&self) -> bool {
-        match self.chr0 {
-            None => return true,
             _ => return false,
         }
     }
@@ -220,26 +246,124 @@ impl<'input> Iterator for Lexer<'input> {
                     return Some(self.lex_string());
                 },
                 Some('=') => {
-                    //let V = X[&self.chr0.unwrap()];
                     self.next_char();
-                    return Some(Ok((0, Tok::Equal, 0)))
-                    //return Some(Ok((0, V)))
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::EqEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::Equal, self.location + 1)))
+                        }
+                    }
                 },
                 Some('+') => {
                     self.next_char();
-                    return Some(Ok((0, Tok::Plus, 0)))
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::PlusEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::Plus, self.location + 1)))
+                        }
+                    }
+
                 },
                 Some('*') => {
+                    let tok_start = self.location;
                     self.next_char();
-                    return Some(Ok((0, Tok::Star, 0)))
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::StarEqual, self.location + 1)))
+                        },
+                        Some('*') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::DoubleStar, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((tok_start, Tok::Star, self.location + 1)))
+                        }
+                    }
                 },
                 Some('/') => {
+                    let tok_start = self.location;
                     self.next_char();
-                    return Some(Ok((self.location, Tok::Slash, self.location + 1)))
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::SlashEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((tok_start, Tok::Slash, self.location + 1)))
+                        }
+                    }
+                },
+                Some('%') => {
+                    self.next_char();
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::PercentEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::Percent, self.location + 1)))
+                        }
+                    }
+
+                },
+                Some('|') => {
+                    self.next_char();
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::VbarEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::Vbar, self.location + 1)))
+                        }
+                    }
+
+                },
+                Some('^') => {
+                    self.next_char();
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::CircumflexEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::CircumFlex, self.location + 1)))
+                        }
+                    }
+
+                },
+                Some('&') => {
+                    self.next_char();
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((self.location, Tok::AmperEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((self.location, Tok::Amper, self.location + 1)))
+                        }
+                    }
+
                 },
                 Some('-') => {
+                    let tok_start = self.location;
                     self.next_char();
-                    return Some(Ok((0, Tok::Minus, 0)))
+                    match self.chr0 {
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::MinusEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((tok_start, Tok::Minus, self.location + 1)))
+                        }
+                    }
                 },
                 Some('(') => {
                     self.next_char();
@@ -261,13 +385,75 @@ impl<'input> Iterator for Lexer<'input> {
                     self.nesting -= 1;
                     return Some(Ok((self.location, Tok::Rsqb, self.location + 1)))
                 },
+                Some('{') => {
+                    self.next_char();
+                    self.nesting += 1;
+                    return Some(Ok((0, Tok::Lbrace, 0)))
+                },
+                Some('}') => {
+                    self.next_char();
+                    self.nesting -= 1;
+                    return Some(Ok((self.location, Tok::Rbrace, self.location + 1)))
+                },
                 Some(':') => {
                     self.next_char();
                     return Some(Ok((self.location, Tok::Colon, self.location + 1)))
                 },
+                Some('<') => {
+                    let tok_start = self.location;
+                    self.next_char();
+                    match self.chr0 {
+                        Some('<') => {
+                            self.next_char();
+                            match self.chr0 {
+                                Some('=') => {
+                                    return Some(Ok((tok_start, Tok::LeftShiftEqual, self.location + 1)))
+                                },
+                                _ => {
+                                    return Some(Ok((tok_start, Tok::LeftShift, self.location + 1)))
+                                }
+                            }
+                        },
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::LessEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((tok_start, Tok::Less, self.location + 1)))
+                        }
+                    }
+                },
+                Some('>') => {
+                    let tok_start = self.location;
+                    self.next_char();
+                    match self.chr0 {
+                        Some('>') => {
+                            self.next_char();
+                            match self.chr0 {
+                                Some('=') => {
+                                    return Some(Ok((tok_start, Tok::RightShiftEqual, self.location + 1)))
+                                },
+                                _ => {
+                                    return Some(Ok((tok_start, Tok::RightShift, self.location + 1)))
+                                }
+                            }
+                        },
+                        Some('=') => {
+                            self.next_char();
+                            return Some(Ok((tok_start, Tok::GreaterEqual, self.location + 1)))
+                        },
+                        _ => {
+                            return Some(Ok((tok_start, Tok::Greater, self.location + 1)))
+                        }
+                    }
+                },
                 Some(',') => {
                     self.next_char();
                     return Some(Ok((self.location, Tok::Comma, self.location + 1)))
+                },
+                Some('.') => {
+                    self.next_char();
+                    return Some(Ok((self.location, Tok::Dot, self.location + 1)))
                 },
                 Some('\n') => {
                     self.next_char();
@@ -318,7 +504,7 @@ mod tests {
     fn test_indentation() {
         let source = String::from("def foo():\n   return 99\n");
         let tokens = lex_source(&source);
-        assert_eq!(tokens, vec![Tok::Name { name: String::from("def") }, Tok::Name { name: String::from("foo") }, Tok::Lpar, Tok::Rpar, Tok::Colon, Tok::Newline, Tok::Indent, Tok::Name { name: String::from("return")}, Tok::Number { value: 99 }, Tok::Newline, Tok::Dedent]);
+        assert_eq!(tokens, vec![Tok::Def, Tok::Name { name: String::from("foo") }, Tok::Lpar, Tok::Rpar, Tok::Colon, Tok::Newline, Tok::Indent, Tok::Return, Tok::Number { value: 99 }, Tok::Newline, Tok::Dedent]);
     }
 
     #[test]

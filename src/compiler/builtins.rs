@@ -7,19 +7,18 @@
  * https://github.com/python/cpython/blob/master/Python/bltinmodule.c
  */
 
-use std::rc::Rc;
-use super::pyobject::PyObject;
+use super::pyobject::PyObjectRef;
 use std::io::{self, Write};
 
 pub fn fill_scope() {
   // scope[String::from("print")] = print;
 }
 
-pub fn print(args: Vec<Rc<PyObject>>) {
+pub fn print(args: Vec<PyObjectRef>) {
     // println!("Woot: {:?}", args);
     trace!("print called with {:?}", args);
     for a in args {
-        print!("{} ", a.str());
+        print!("{} ", a.borrow_mut().str());
     }
     println!();
     io::stdout().flush().unwrap();

@@ -49,16 +49,19 @@ pub fn parse_source(source: &String) -> Result<ast::Program, String> {
 #[cfg(test)]
 mod tests {
     use super::parse_source;
+    // use super::ast;
 
     #[test]
     fn test_parse_print_hello() {
         let source = String::from("print('Hello world')\n");
-        parse_source(&source).unwrap();
+        let parse_ast = parse_source(&source).unwrap();
+        //assert_eq!(parse_ast, ast::Program { statements: vec![] });
     }
 
     #[test]
     fn test_parse_print_2() {
         let source = String::from("print('Hello world', 2)\n");
-        parse_source(&source).unwrap();
+        let parse_ast = parse_source(&source).unwrap();
+        //assert_eq!(parse_ast, ast::Program { statements: vec![] });
     }
 }
