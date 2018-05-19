@@ -48,7 +48,7 @@ impl VirtualMachine {
         // Process instruction at the program counter until exception or finished.
         loop {
             // for instruction in code.instructions {
-            if self.program_counter > code.instructions.len() {
+            if self.program_counter >= code.instructions.len() {
                 break;
             }
 
