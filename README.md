@@ -1,5 +1,7 @@
 # RsPython
 
+**ATTENTION: project superseeded by: ** https://github.com/RustPython/RustPython
+
 Rust implementation of the python language :snake: :scream: :metal:.
 
 ATTENTION: project in prototyping phase!
